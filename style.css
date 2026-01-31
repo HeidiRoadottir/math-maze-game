@@ -28,6 +28,12 @@ body{
   color:var(--text);
 }
 
+.confetti{
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
 .app{
   max-width: 980px;
   margin: 0 auto;
