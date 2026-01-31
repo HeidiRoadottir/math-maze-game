@@ -23,15 +23,28 @@
     <section class="boardWrap">
       <div id="board" class="board" aria-label="Maze board"></div>
     </section>
-
-    
   </main>
-  
+
   <!-- Start Screen -->
   <div id="startBackdrop" class="backdrop">
     <div class="modal">
       <h2>Welcome to Math Maze!</h2>
       <p class="feedback">Pick your character and type your name.</p>
+
+      <!-- Rules box -->
+      <div class="rulesBox">
+        <div class="miniBtns">
+          <span class="miniBtn">⬆️</span>
+          <span class="miniBtn">⬅️</span>
+          <span class="miniBtn">⬇️</span>
+          <span class="miniBtn">➡️</span>
+        </div>
+        <ul>
+          <li>Move with your keyboard arrow keys</li>
+          <li>Answer the math question to move</li>
+          <li>Reach the 🏁 finish tile to win</li>
+        </ul>
+      </div>
 
       <label class="label">Your name</label>
       <input id="nameInput" placeholder="e.g. Heidi" />
@@ -41,21 +54,6 @@
         <!-- buttons added by JS -->
       </div>
 
-<!-- Rules box -->   
-      <div class="rulesBox">
-        <div class="miniBtns">
-          <span class="miniBtn">⬆️</span>
-          <span class="miniBtn">⬅️</span>
-          <span class="miniBtn">⬇️</span>
-          <span class="miniBtn">➡️</span>
-        </div>
-        <ul>
-          <li>Move with arrows or the buttons</li>
-          <li>Answer the math question to move</li>
-          <li>Reach the 🏁 finish tile to win</li>
-        </ul>
-      </div>
-      
       <div class="modalActions">
         <button id="startGame" class="btn primary">Start!</button>
       </div>
