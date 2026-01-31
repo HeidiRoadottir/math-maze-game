@@ -6,6 +6,8 @@
   <title>Math Maze</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+<canvas id="confetti" class="confetti hidden"></canvas>
+ 
 <body>
   <main class="app">
     <header class="topbar">
@@ -37,6 +39,26 @@
       <p class="hint">Use arrow keys or buttons. Each move needs a math answer!</p>
     </section>
   </main>
+
+  <!-- Start Screen -->
+<div id="startBackdrop" class="backdrop">
+  <div class="modal">
+    <h2>Welcome to Math Maze!</h2>
+    <p class="feedback">Pick your character and type your name.</p>
+
+    <label style="display:block;margin:10px 0 6px;">Your name</label>
+    <input id="nameInput" placeholder="e.g. Heidi" />
+
+    <label style="display:block;margin:12px 0 6px;">Choose a player</label>
+    <div id="avatarPicker" style="display:flex;gap:10px;flex-wrap:wrap;">
+      <!-- buttons added by JS -->
+    </div>
+
+    <div class="modalActions">
+      <button id="startGame" class="btn primary">Start!</button>
+    </div>
+  </div>
+</div>
 
   <!-- Math Modal -->
   <div id="modalBackdrop" class="backdrop hidden" role="dialog" aria-modal="true">
