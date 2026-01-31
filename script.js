@@ -39,39 +39,27 @@ const cancelMove = document.getElementById("cancelMove");
 const feedback = document.getElementById("feedback");
 const toast = document.getElementById("toast");
 
-
-let rows = level.length;
-let cols = level[0].length;
-
-let player = findTile(2); // start
-let goal = findTile(3);
-
-let playerName = "You";
-let playerAvatar = "🙂";
-
-let moves = 0;
-let correct = 0;
-
-function loadLevel(index){
-  levelIndex = index;
-  level = levels[levelIndex];
-
-  // recompute sizes
-  rows = level.length;
-  cols = level[0].length;
-
-  player = findTile(2);
-  goal = findTile(3);
-
-  const startBackdrop = document.getElementById("startBackdrop");
+// Start screen
+const startBackdrop = document.getElementById("startBackdrop");
 const nameInput = document.getElementById("nameInput");
 const avatarPicker = document.getElementById("avatarPicker");
 const startGameBtn = document.getElementById("startGame");
 
 const avatars = ["🙂","😺","🐸","🦊","🐼","🐵","🧙‍♂️","👩‍🚀"];
-
 let selectedAvatarIndex = 0;
 
+let rows, cols;
+let player;
+let goal;
+
+let playerName = "Player";
+let playerAvatar = "🙂";
+
+let moves = 0;
+let correct = 0;
+let currentQ = null;
+
+// ---------- START SCREEN ----------
 function buildAvatarPicker(){
   avatarPicker.innerHTML = "";
   avatars.forEach((a, i) => {
@@ -85,22 +73,32 @@ function buildAvatarPicker(){
     avatarPicker.appendChild(b);
   });
 }
-
 buildAvatarPicker();
 
 startGameBtn.addEventListener("click", () => {
-  playerName = (nameInput.value.trim() || "Player").slice(0, 12);
+  playerName = (nameInput.value.trim() || "Player").slice(0,12);
   playerAvatar = avatars[selectedAvatarIndex];
   startBackdrop.classList.add("hidden");
-
-  // Start at level 1
   loadLevel(0);
 });
 
-  
-  // Show start screen initially
-startBackdrop.classList.remove("hidden");
+// ---------- LEVEL ----------
+function loadLevel(index){
+  levelIndex = index;
+  level = levels[levelIndex];
 
+  rows = level.length;
+  cols = level[0].length;
+
+  player = findTile(2);
+  goal = findTile(3);
+
+  moves = 0;
+  correct = 0;
+
+  render();
+  showToast(`Level ${levelIndex + 1}`);
+}
 
 function findTile(val){
   for(let r=0;r<rows;r++){
@@ -115,12 +113,6 @@ function render(){
   boardEl.style.gridTemplateColumns = `repeat(${cols}, var(--tileSize))`;
   boardEl.innerHTML = "";
 
-  if(player.r === r && player.c === c){
-  tile.classList.add("player");
-  tile.dataset.name = playerName;
-  tile.dataset.avatar = playerAvatar;
-}
-
   for(let r=0;r<rows;r++){
     for(let c=0;c<cols;c++){
       const tile = document.createElement("div");
@@ -132,26 +124,18 @@ function render(){
       if(v === 2) tile.classList.add("start");
       if(v === 3) tile.classList.add("goal");
 
-      if(player.r === goal.r && player.c === goal.c){
-  winEffects();
-
-  setTimeout(() => {
-    const next = levelIndex + 1;
-    if(next < levels.length){
-      loadLevel(next);
-    } else {
-      showToast("🏆 You beat all levels!");
-    }
-  }, 900);
-}
-
+      if(player.r === r && player.c === c){
+        tile.classList.add("player");
+        tile.dataset.name = playerName;
+        tile.dataset.avatar = playerAvatar;
+      }
 
       boardEl.appendChild(tile);
     }
   }
 
-  movesEl.textContent = String(moves);
-  correctEl.textContent = String(correct);
+  movesEl.textContent = moves;
+  correctEl.textContent = correct;
 }
 
 function isWalkable(r,c){
@@ -159,47 +143,45 @@ function isWalkable(r,c){
   return level[r][c] !== 0;
 }
 
+// ---------- MOVEMENT ----------
 function tryMove(dx,dy){
   const nr = player.r + dy;
   const nc = player.c + dx;
 
   if(!isWalkable(nr,nc)){
-    showToast("Bump! That's a wall.");
+    showToast("Bump! Wall!");
     return;
   }
 
-  // Store move on the modal element (robust)
-  backdrop.dataset.dx = String(dx);
-  backdrop.dataset.dy = String(dy);
-
+  backdrop.dataset.dx = dx;
+  backdrop.dataset.dy = dy;
   openMathModal();
 }
-
-
-
 
 function doMove(dx,dy){
   player = { r: player.r + dy, c: player.c + dx };
   moves++;
-
   render();
 
   if(player.r === goal.r && player.c === goal.c){
-    showToast("🎉 Level complete! Refresh to play again.");
+    winEffects();
+    setTimeout(()=>{
+      if(levelIndex + 1 < levels.length){
+        loadLevel(levelIndex + 1);
+      } else {
+        showToast("🏆 All levels complete!");
+      }
+    }, 1000);
   }
 }
 
+// ---------- MATH ----------
 function randomQuestion(){
-  // Age 7–9 friendly: small sums/subtractions
   const ops = ["+","-"];
   const op = ops[Math.floor(Math.random()*ops.length)];
-
   let a = randInt(1,12);
   let b = randInt(1,12);
-
-  // avoid negatives for subtraction
   if(op === "-" && b > a) [a,b] = [b,a];
-
   const answer = op === "+" ? a+b : a-b;
   return { a, b, op, answer };
 }
@@ -207,8 +189,6 @@ function randomQuestion(){
 function randInt(min,max){
   return Math.floor(Math.random()*(max-min+1)) + min;
 }
-
-let currentQ = null;
 
 function openMathModal(){
   currentQ = randomQuestion();
@@ -221,10 +201,7 @@ function openMathModal(){
 
 function closeMathModal(){
   backdrop.classList.add("hidden");
-  backdrop.dataset.dx = "";
-  backdrop.dataset.dy = "";
   currentQ = null;
-  feedback.textContent = "";
 }
 
 function checkAnswer(){
@@ -233,147 +210,102 @@ function checkAnswer(){
   const dx = Number(backdrop.dataset.dx);
   const dy = Number(backdrop.dataset.dy);
 
-  // If somehow OK is clicked without a move stored
-  if(Number.isNaN(dx) || Number.isNaN(dy)){
-    feedback.textContent = "Try moving first 🙂";
-    return;
-  }
-
-  const raw = answerInput.value.trim();
-  const userVal = Number(raw);
-
-  if(raw === "" || Number.isNaN(userVal)){
+  const val = Number(answerInput.value.trim());
+  if(Number.isNaN(val)){
     feedback.textContent = "Type a number 🙂";
     return;
   }
 
-  if(userVal === currentQ.answer){
+  if(val === currentQ.answer){
     correct++;
-    feedback.textContent = "Correct! ✅";
-
-    doMove(dx, dy);
+    soundCorrect();
     closeMathModal();
+    doMove(dx,dy);
   } else {
-    feedback.textContent = "Not quite — try again!";
+    soundWrong();
+    feedback.textContent = "Try again!";
     answerInput.select();
   }
 }
 
-
+// ---------- UI ----------
 function showToast(msg){
   toast.textContent = msg;
   toast.classList.remove("hidden");
   clearTimeout(showToast._t);
-  showToast._t = setTimeout(()=>toast.classList.add("hidden"), 1500);
+  showToast._t = setTimeout(()=>toast.classList.add("hidden"),1500);
 }
 
 // Buttons
 document.querySelectorAll("[data-move]").forEach(btn=>{
   btn.addEventListener("click", ()=>{
-    const dir = btn.dataset.move;
-    if(dir === "up") tryMove(0,-1);
-    if(dir === "down") tryMove(0, 1);
-    if(dir === "left") tryMove(-1,0);
-    if(dir === "right") tryMove(1,0);
+    const d = btn.dataset.move;
+    if(d==="up") tryMove(0,-1);
+    if(d==="down") tryMove(0,1);
+    if(d==="left") tryMove(-1,0);
+    if(d==="right") tryMove(1,0);
   });
 });
 
 // Keyboard
-window.addEventListener("keydown", (e)=>{
-  // If modal open, Enter submits
+window.addEventListener("keydown",(e)=>{
   if(!backdrop.classList.contains("hidden")){
-    if(e.key === "Enter") checkAnswer();
-    if(e.key === "Escape") closeMathModal();
+    if(e.key==="Enter") checkAnswer();
+    if(e.key==="Escape") closeMathModal();
     return;
   }
-  if(e.key === "ArrowUp") tryMove(0,-1);
-  if(e.key === "ArrowDown") tryMove(0, 1);
-  if(e.key === "ArrowLeft") tryMove(-1,0);
-  if(e.key === "ArrowRight") tryMove(1,0);
+  if(e.key==="ArrowUp") tryMove(0,-1);
+  if(e.key==="ArrowDown") tryMove(0,1);
+  if(e.key==="ArrowLeft") tryMove(-1,0);
+  if(e.key==="ArrowRight") tryMove(1,0);
 });
 
-// ---- SOUND (WebAudio) ----
+// ---------- SOUND ----------
 let audioCtx;
-function beep(freq=440, duration=0.09, type="sine", gain=0.07){
-  audioCtx ??= new (window.AudioContext || window.webkitAudioContext)();
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.type = type;
-  o.frequency.value = freq;
-  g.gain.value = gain;
-  o.connect(g);
-  g.connect(audioCtx.destination);
-  o.start();
-  o.stop(audioCtx.currentTime + duration);
+function beep(freq=440, duration=0.1){
+  audioCtx ??= new (window.AudioContext||window.webkitAudioContext)();
+  const o=audioCtx.createOscillator();
+  const g=audioCtx.createGain();
+  o.frequency.value=freq;
+  g.gain.value=0.07;
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(); o.stop(audioCtx.currentTime+duration);
 }
+function soundCorrect(){beep(700);setTimeout(()=>beep(900),80);}
+function soundWrong(){beep(200,0.15);}
+function soundWin(){beep(500);setTimeout(()=>beep(650),120);setTimeout(()=>beep(800),240);}
 
-function soundCorrect(){
-  beep(660, 0.06, "triangle", 0.06);
-  setTimeout(()=>beep(880, 0.07, "triangle", 0.06), 70);
-}
-function soundWrong(){
-  beep(220, 0.12, "sawtooth", 0.04);
-}
-function soundWin(){
-  beep(523, 0.08, "square", 0.06);
-  setTimeout(()=>beep(659, 0.08, "square", 0.06), 90);
-  setTimeout(()=>beep(784, 0.12, "square", 0.06), 180);
-}
-
-// ---- CONFETTI ----
-const confettiCanvas = document.getElementById("confetti");
-const confettiCtx = confettiCanvas.getContext("2d");
-let confettiPieces = [];
-let confettiRunning = false;
-
+// ---------- CONFETTI ----------
+const confettiCanvas=document.getElementById("confetti");
+const confettiCtx=confettiCanvas.getContext("2d");
 function resizeConfetti(){
-  confettiCanvas.width = window.innerWidth * devicePixelRatio;
-  confettiCanvas.height = window.innerHeight * devicePixelRatio;
-  confettiCtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  confettiCanvas.width=window.innerWidth;
+  confettiCanvas.height=window.innerHeight;
 }
-window.addEventListener("resize", resizeConfetti);
+window.addEventListener("resize",resizeConfetti);
 resizeConfetti();
 
 function launchConfetti(){
-  confettiPieces = Array.from({length: 140}, () => ({
-    x: Math.random() * window.innerWidth,
-    y: -20 - Math.random() * 300,
-    r: 4 + Math.random() * 6,
-    vy: 2 + Math.random() * 5,
-    vx: -2 + Math.random() * 4,
-    rot: Math.random()*Math.PI,
-    vr: -0.15 + Math.random()*0.3
+  const pieces=Array.from({length:120},()=>({
+    x:Math.random()*confettiCanvas.width,
+    y:-20,
+    vy:2+Math.random()*4,
+    vx:-2+Math.random()*4,
+    size:4+Math.random()*6,
+    color:`hsl(${Math.random()*360},90%,60%)`
   }));
-
-  confettiCanvas.classList.remove("hidden");
-  confettiRunning = true;
-  requestAnimationFrame(tickConfetti);
-
-  setTimeout(() => {
-    confettiRunning = false;
-    confettiCanvas.classList.add("hidden");
-  }, 900);
-}
-
-function tickConfetti(){
-  if(!confettiRunning) return;
-  confettiCtx.clearRect(0,0,window.innerWidth, window.innerHeight);
-
-  for(const p of confettiPieces){
-    p.x += p.vx;
-    p.y += p.vy;
-    p.rot += p.vr;
-
-    confettiCtx.save();
-    confettiCtx.translate(p.x, p.y);
-    confettiCtx.rotate(p.rot);
-    // no fixed colors requested, but we can still randomize per piece:
-    confettiCtx.fillStyle = `hsl(${Math.random()*360}, 90%, 60%)`;
-    confettiCtx.fillRect(-p.r, -p.r, p.r*2.2, p.r*1.2);
-    confettiCtx.restore();
+  let frames=0;
+  function tick(){
+    confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+    pieces.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy;
+      confettiCtx.fillStyle=p.color;
+      confettiCtx.fillRect(p.x,p.y,p.size,p.size);
+    });
+    frames++;
+    if(frames<90) requestAnimationFrame(tick);
   }
-
-  requestAnimationFrame(tickConfetti);
+  tick();
 }
 
 function winEffects(){
@@ -382,13 +314,12 @@ function winEffects(){
   showToast("🎉 Level complete!");
 }
 
-
-// Modal actions
+// Modal
 submitAnswer.addEventListener("click", checkAnswer);
 cancelMove.addEventListener("click", closeMathModal);
-backdrop.addEventListener("click", (e)=>{
-  if(e.target === backdrop) closeMathModal();
+backdrop.addEventListener("click", e=>{
+  if(e.target===backdrop) closeMathModal();
 });
 
-// Start
-render();
+// Start screen first
+startBackdrop.classList.remove("hidden");
