@@ -31,7 +31,7 @@ const boardEl = document.getElementById("board");
 const movesEl = document.getElementById("moves");
 const correctEl = document.getElementById("correct");
 
-const backdrop = document.getElementById("modalBackdrop");
+const modalBackdrop = document.getElementById("modalBackdrop");
 const questionText = document.getElementById("questionText");
 const answerInput = document.getElementById("answerInput");
 const submitAnswer = document.getElementById("submitAnswer");
@@ -44,6 +44,8 @@ const startBackdrop = document.getElementById("startBackdrop");
 const nameInput = document.getElementById("nameInput");
 const avatarPicker = document.getElementById("avatarPicker");
 const startGameBtn = document.getElementById("startGame");
+
+const controlsEl = document.querySelector(".controls");
 
 const avatars = ["🙂","😺","🐸","🦊","🐼","🐵","🧙‍♂️","👩‍🚀"];
 let selectedAvatarIndex = 0;
@@ -78,7 +80,10 @@ buildAvatarPicker();
 startGameBtn.addEventListener("click", () => {
   playerName = (nameInput.value.trim() || "Player").slice(0,12);
   playerAvatar = avatars[selectedAvatarIndex];
+
   startBackdrop.classList.add("hidden");
+  controlsEl.classList.remove("game-hidden");
+
   loadLevel(0);
 });
 
@@ -153,8 +158,8 @@ function tryMove(dx,dy){
     return;
   }
 
-  backdrop.dataset.dx = dx;
-  backdrop.dataset.dy = dy;
+  modalBackdrop.dataset.dx = dx;
+  modalBackdrop.dataset.dy = dy;
   openMathModal();
 }
 
@@ -165,6 +170,7 @@ function doMove(dx,dy){
 
   if(player.r === goal.r && player.c === goal.c){
     winEffects();
+
     setTimeout(()=>{
       if(levelIndex + 1 < levels.length){
         loadLevel(levelIndex + 1);
@@ -195,20 +201,20 @@ function openMathModal(){
   questionText.textContent = `${currentQ.a} ${currentQ.op} ${currentQ.b} = ?`;
   feedback.textContent = "Answer to move!";
   answerInput.value = "";
-  backdrop.classList.remove("hidden");
+  modalBackdrop.classList.remove("hidden");
   answerInput.focus();
 }
 
 function closeMathModal(){
-  backdrop.classList.add("hidden");
+  modalBackdrop.classList.add("hidden");
   currentQ = null;
 }
 
 function checkAnswer(){
   if(!currentQ) return;
 
-  const dx = Number(backdrop.dataset.dx);
-  const dy = Number(backdrop.dataset.dy);
+  const dx = Number(modalBackdrop.dataset.dx);
+  const dy = Number(modalBackdrop.dataset.dy);
 
   const val = Number(answerInput.value.trim());
   if(Number.isNaN(val)){
@@ -249,7 +255,7 @@ document.querySelectorAll("[data-move]").forEach(btn=>{
 
 // Keyboard
 window.addEventListener("keydown",(e)=>{
-  if(!backdrop.classList.contains("hidden")){
+  if(!modalBackdrop.classList.contains("hidden")){
     if(e.key==="Enter") checkAnswer();
     if(e.key==="Escape") closeMathModal();
     return;
@@ -276,17 +282,18 @@ function soundWrong(){beep(200,0.15);}
 function soundWin(){beep(500);setTimeout(()=>beep(650),120);setTimeout(()=>beep(800),240);}
 
 // ---------- CONFETTI ----------
-const confettiCanvas=document.getElementById("confetti");
-const confettiCtx=confettiCanvas.getContext("2d");
+const confettiCanvas = document.getElementById("confetti");
+const confettiCtx = confettiCanvas.getContext("2d");
+
 function resizeConfetti(){
-  confettiCanvas.width=window.innerWidth;
-  confettiCanvas.height=window.innerHeight;
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
 }
-window.addEventListener("resize",resizeConfetti);
+window.addEventListener("resize", resizeConfetti);
 resizeConfetti();
 
 function launchConfetti(){
-  const pieces=Array.from({length:120},()=>({
+  const pieces = Array.from({length:120},()=>({
     x:Math.random()*confettiCanvas.width,
     y:-20,
     vy:2+Math.random()*4,
@@ -294,17 +301,28 @@ function launchConfetti(){
     size:4+Math.random()*6,
     color:`hsl(${Math.random()*360},90%,60%)`
   }));
-  let frames=0;
+
+  let frames = 0;
+
   function tick(){
     confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+
     pieces.forEach(p=>{
-      p.x+=p.vx; p.y+=p.vy;
-      confettiCtx.fillStyle=p.color;
+      p.x += p.vx;
+      p.y += p.vy;
+      confettiCtx.fillStyle = p.color;
       confettiCtx.fillRect(p.x,p.y,p.size,p.size);
     });
+
     frames++;
-    if(frames<90) requestAnimationFrame(tick);
+
+    if(frames < 90){
+      requestAnimationFrame(tick);
+    } else {
+      confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+    }
   }
+
   tick();
 }
 
@@ -314,11 +332,11 @@ function winEffects(){
   showToast("🎉 Level complete!");
 }
 
-// Modal
+// Modal actions
 submitAnswer.addEventListener("click", checkAnswer);
 cancelMove.addEventListener("click", closeMathModal);
-backdrop.addEventListener("click", e=>{
-  if(e.target===backdrop) closeMathModal();
+modalBackdrop.addEventListener("click", e=>{
+  if(e.target === modalBackdrop) closeMathModal();
 });
 
 // Start screen first
