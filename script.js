@@ -145,18 +145,18 @@ function checkAnswer(){
     return;
   }
 
-  if(userVal === currentQ.answer){
-    correct++;
-    feedback.textContent = "Correct! ✅";
-    // small delay so they see feedback
-    setTimeout(() => {
-      closeMathModal();
-      doMove(pendingMove.dx, pendingMove.dy);
-    }, 250);
-  } else {
-    feedback.textContent = "Not quite — try again!";
-    answerInput.select();
-  }
+if(userVal === currentQ.answer){
+  correct++;
+  feedback.textContent = "Correct! ✅";
+
+  const move = { ...pendingMove }; // ✅ copy it before we clear it
+
+  setTimeout(() => {
+    closeMathModal();              // this clears pendingMove
+    doMove(move.dx, move.dy);      // ✅ use the saved copy
+  }, 250);
+}
+
 }
 
 function showToast(msg){
