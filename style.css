@@ -16,15 +16,19 @@
   --shadow: 0 16px 40px rgba(0,0,0,.45);
   --radius:22px;
 
-  --tileSize: 52px;   /* ✅ change this for bigger/smaller tiles */
+  --tileSize: 52px;   /* change this for bigger/smaller tiles */
   --tileGap: 3px;
 }
 
 *{box-sizing:border-box;}
+
 body{
   margin:0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  background: radial-gradient(1200px 700px at 20% 0%, #1a2a6b20, transparent), var(--bg);
+  background:
+    radial-gradient(1200px 700px at 20% 0%, #2b5dff25, transparent),
+    radial-gradient(900px 600px at 80% 20%, #ff4fd820, transparent),
+    var(--bg);
   color:var(--text);
 }
 
@@ -43,23 +47,26 @@ body{
 }
 
 .topbar{
-  background: var(--panel);
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
   border-radius: var(--radius);
   padding: 14px 16px;
   box-shadow: var(--shadow);
   display:flex;
   align-items:center;
   justify-content:space-between;
+  border: 1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(6px);
 }
 .topbar h1{margin:0; font-size: 20px;}
 .hud{display:flex; gap:14px; color:var(--muted); font-size: 14px;}
 
 .boardWrap{
-  background: var(--panel);
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
   border-radius: var(--radius);
   padding: 14px;
   box-shadow: var(--shadow);
   overflow:auto;
+  border: 1px solid rgba(255,255,255,.10);
 }
 
 .board{
@@ -67,11 +74,12 @@ body{
   gap: var(--tileGap);
   justify-content:start;
   user-select:none;
-  padding: 6px;
+  padding: 10px;
   border-radius: 18px;
-  background: radial-gradient(circle at 30% 10%, #2b5dff22, transparent 45%),
-              radial-gradient(circle at 80% 40%, #ff4fd822, transparent 40%),
-              rgba(0,0,0,.15);
+  background:
+    radial-gradient(circle at 30% 10%, #2b5dff22, transparent 45%),
+    radial-gradient(circle at 80% 40%, #ff4fd822, transparent 40%),
+    rgba(0,0,0,.15);
 }
 
 .tile{
@@ -82,37 +90,58 @@ body{
   background: rgba(255,255,255,.06);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
 }
-.wall{ background: linear-gradient(180deg, #02061a, var(--wall)); }
-.path{ background: linear-gradient(180deg, #203a86, var(--path)); }
-.start{ background: linear-gradient(180deg, #1ef0a0, var(--start)); }
-.goal{ background: linear-gradient(180deg, #ffe08a, var(--goal)); }
 
+/* ✅ Maze colors (single source of truth) */
+.wall{
+  background: linear-gradient(180deg, #02061a, #0a0f2e);
+}
+.path{
+  background: linear-gradient(180deg,#3a6cff,#1e3caa);
+}
+.start{
+  background: linear-gradient(180deg,#2cff9a,#18c16e);
+}
+.goal{
+  background: linear-gradient(180deg,#ffe066,#ffbf2f);
+}
 
-.wall{ background: var(--wall); }
-.path{ background: var(--path); }
-.start{ background: color-mix(in srgb, var(--start) 70%, var(--path)); }
-.goal{ background: color-mix(in srgb, var(--goal) 75%, var(--path)); }
-
+/* ✅ Player uses avatar + name */
 .player::after{
-  content:"🙂";
+  content: attr(data-avatar);
   position:absolute;
-  inset: 4px;
+  inset: 6px;
   border-radius: 999px;
-  background: var(--player);
+  background: color-mix(in srgb, var(--player) 65%, white);
   display:grid;
   place-items:center;
-  font-size: 18px;
-  box-shadow: 0 0 0 3px rgba(0,0,0,.35), 0 8px 18px rgba(0,0,0,.35);
+  font-size: calc(var(--tileSize) * 0.42);
+  box-shadow: 0 0 0 4px rgba(0,0,0,.25), 0 14px 24px rgba(0,0,0,.35);
+}
+
+.player::before{
+  content: attr(data-name);
+  position:absolute;
+  left: 50%;
+  bottom: -10px;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,.55);
+  border: 1px solid rgba(255,255,255,.14);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--text);
+  white-space: nowrap;
 }
 
 .controls{
-  background: var(--panel);
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
   border-radius: var(--radius);
   padding: 14px 16px;
   box-shadow: var(--shadow);
   display:grid;
   justify-items:center;
   gap:10px;
+  border: 1px solid rgba(255,255,255,.10);
 }
 
 .row{display:flex; gap:10px; align-items:center;}
@@ -141,14 +170,16 @@ body{
   background: rgba(0,0,0,.55);
   padding: 18px;
 }
+
 .hidden{display:none;}
 
 .modal{
   width:min(520px, 100%);
-  background: var(--panel);
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
   border-radius: 22px;
   padding: 18px;
   box-shadow: var(--shadow);
+  border: 1px solid rgba(255,255,255,.10);
 }
 .modal h2{margin:0 0 12px; font-size: 22px;}
 
@@ -157,8 +188,10 @@ body{
   gap:10px;
   align-items:center;
 }
-#answerInput{
-  flex:1;
+
+#answerInput,
+#nameInput{
+  width: 100%;
   padding: 12px 12px;
   border-radius: 14px;
   border: 1px solid #2a366a;
@@ -184,44 +217,7 @@ body{
   box-shadow: var(--shadow);
 }
 
-.player::after{
-  content: attr(data-avatar);
-  position:absolute;
-  inset: 6px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--player) 65%, white);
-  display:grid;
-  place-items:center;
-  font-size: calc(var(--tileSize) * 0.42);
-  box-shadow: 0 0 0 4px rgba(0,0,0,.25), 0 14px 24px rgba(0,0,0,.35);
-}
-
-.player::before{
-  content: attr(data-name);
-  position:absolute;
-  left: 50%;
-  bottom: -10px;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,.55);
-  border: 1px solid rgba(255,255,255,.14);
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  color: var(--text);
-  white-space: nowrap;
-}
-
-#nameInput{
-  width: 100%;
-  padding: 12px 12px;
-  border-radius: 14px;
-  border: 1px solid #2a366a;
-  outline:none;
-  background:#0f1734;
-  color:var(--text);
-  font-size: 16px;
-}
-
+/* Avatar picker */
 .avatarBtn{
   border: 1px solid rgba(255,255,255,.14);
   background: rgba(255,255,255,.06);
@@ -235,7 +231,7 @@ body{
   background: rgba(43,93,255,.18);
 }
 
-
+/* Legend */
 .legend{
   display:flex;
   gap:10px;
@@ -252,8 +248,7 @@ body{
   background:#0f1734;
 }
 
-.key.wall{ background: var(--wall); color: var(--muted); }
+.key.wall{ background: #0a0f2e; color: var(--muted); }
 .key.start{ background: var(--start); color: white; border-color: transparent; }
 .key.goal{ background: var(--goal); color: #0b1020; border-color: transparent; }
 .key.you{ background: var(--player); color: #0b1020; border-color: transparent; font-weight: 800; }
-
