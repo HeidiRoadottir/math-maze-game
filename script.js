@@ -45,8 +45,6 @@ const nameInput = document.getElementById("nameInput");
 const avatarPicker = document.getElementById("avatarPicker");
 const startGameBtn = document.getElementById("startGame");
 
-const controlsEl = document.querySelector(".controls");
-
 const avatars = ["🙂","😺","🐸","🦊","🐼","🐵","🧙‍♂️","👩‍🚀"];
 let selectedAvatarIndex = 0;
 
@@ -82,8 +80,6 @@ startGameBtn.addEventListener("click", () => {
   playerAvatar = avatars[selectedAvatarIndex];
 
   startBackdrop.classList.add("hidden");
-  controlsEl.classList.remove("game-hidden");
-
   loadLevel(0);
 });
 
@@ -242,18 +238,7 @@ function showToast(msg){
   showToast._t = setTimeout(()=>toast.classList.add("hidden"),1500);
 }
 
-// Buttons
-document.querySelectorAll("[data-move]").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    const d = btn.dataset.move;
-    if(d==="up") tryMove(0,-1);
-    if(d==="down") tryMove(0,1);
-    if(d==="left") tryMove(-1,0);
-    if(d==="right") tryMove(1,0);
-  });
-});
-
-// Keyboard
+// Keyboard controls only
 window.addEventListener("keydown",(e)=>{
   if(!modalBackdrop.classList.contains("hidden")){
     if(e.key==="Enter") checkAnswer();
