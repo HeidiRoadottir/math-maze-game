@@ -190,7 +190,7 @@ body{
 
 .modal{
   width:min(560px, 100%);
-  background: rgba(15,23,52,0.92);
+  background: #0f1734;  /* solid panel instead of glass */
   border-radius: 22px;
   padding: 20px;
   box-shadow: var(--shadow);
