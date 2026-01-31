@@ -156,3 +156,39 @@ body{
   border-radius: 999px;
   box-shadow: var(--shadow);
 }
+
+.player::after{
+  content:"YOU";
+  position:absolute;
+  inset: 5px;
+  border-radius: 999px;           /* circle */
+  background: var(--player);
+  display:grid;
+  place-items:center;
+  font-weight: 800;
+  font-size: 10px;
+  color:#0b1020;
+  box-shadow: 0 0 0 3px rgba(0,0,0,.25);
+}
+
+.legend{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  color:var(--muted);
+  font-size: 13px;
+}
+
+.key{
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #2a366a;
+  background:#0f1734;
+}
+
+.key.wall{ background: var(--wall); color: var(--muted); }
+.key.start{ background: var(--start); color: white; border-color: transparent; }
+.key.goal{ background: var(--goal); color: #0b1020; border-color: transparent; }
+.key.you{ background: var(--player); color: #0b1020; border-color: transparent; font-weight: 800; }
+
