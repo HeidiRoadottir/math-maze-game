@@ -334,6 +334,51 @@ function winEffects(){
   showToast("🎉 Level complete!");
 }
 
+// Mobile/optional buttons (safe even on desktop)
+document.querySelectorAll("[data-move]").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const d = btn.dataset.move;
+    if(d==="up") tryMove(0,-1);
+    if(d==="down") tryMove(0,1);
+    if(d==="left") tryMove(-1,0);
+    if(d==="right") tryMove(1,0);
+  });
+});
+
+// 📱 Swipe controls on the boardWrap
+const boardWrap = document.querySelector(".boardWrap");
+let touchStartX = 0;
+let touchStartY = 0;
+
+boardWrap?.addEventListener("touchstart", (e) => {
+  const t = e.touches[0];
+  touchStartX = t.clientX;
+  touchStartY = t.clientY;
+}, {passive:true});
+
+boardWrap?.addEventListener("touchend", (e) => {
+  const t = e.changedTouches[0];
+  const dx = t.clientX - touchStartX;
+  const dy = t.clientY - touchStartY;
+
+  const absX = Math.abs(dx);
+  const absY = Math.abs(dy);
+
+  // Ignore tiny swipes
+  if(Math.max(absX, absY) < 24) return;
+
+  if(absX > absY){
+    // left/right
+    if(dx > 0) tryMove(1,0);
+    else tryMove(-1,0);
+  } else {
+    // up/down
+    if(dy > 0) tryMove(0,1);
+    else tryMove(0,-1);
+  }
+});
+
+
 // Modal actions
 submitAnswer?.addEventListener("click", checkAnswer);
 cancelMove?.addEventListener("click", closeMathModal);
