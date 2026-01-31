@@ -32,7 +32,7 @@ let goal = findTile(3);
 let moves = 0;
 let correct = 0;
 
-let pendingMove = null; // {dx,dy}
+
 
 function findTile(val){
   for(let r=0;r<rows;r++){
@@ -78,15 +78,21 @@ function isWalkable(r,c){
 function tryMove(dx,dy){
   const nr = player.r + dy;
   const nc = player.c + dx;
+
   if(!isWalkable(nr,nc)){
     showToast("Bump! That's a wall.");
     return;
   }
 
-  // Ask math question first
-  pendingMove = {dx,dy};
+  // Store move on the modal element (robust)
+  backdrop.dataset.dx = String(dx);
+  backdrop.dataset.dy = String(dy);
+
   openMathModal();
 }
+
+
+
 
 function doMove(dx,dy){
   player = { r: player.r + dy, c: player.c + dx };
@@ -131,25 +137,26 @@ function openMathModal(){
 
 function closeMathModal(){
   backdrop.classList.add("hidden");
-  pendingMove = null;
+  backdrop.dataset.dx = "";
+  backdrop.dataset.dy = "";
   currentQ = null;
   feedback.textContent = "";
 }
 
 function checkAnswer(){
-  if(!currentQ){
-    console.log("No currentQ");
-    return;
-  }
-  if(!pendingMove){
-    console.log("No pendingMove (did tryMove run?)");
+  if(!currentQ) return;
+
+  const dx = Number(backdrop.dataset.dx);
+  const dy = Number(backdrop.dataset.dy);
+
+  // If somehow OK is clicked without a move stored
+  if(Number.isNaN(dx) || Number.isNaN(dy)){
+    feedback.textContent = "Try moving first 🙂";
     return;
   }
 
   const raw = answerInput.value.trim();
   const userVal = Number(raw);
-
-  console.log("Answer typed:", raw, "Number:", userVal, "Expected:", currentQ.answer, "Move:", pendingMove);
 
   if(raw === "" || Number.isNaN(userVal)){
     feedback.textContent = "Type a number 🙂";
@@ -160,13 +167,8 @@ function checkAnswer(){
     correct++;
     feedback.textContent = "Correct! ✅";
 
-    // ✅ Apply move immediately BEFORE we clear anything
-    const { dx, dy } = pendingMove;
     doMove(dx, dy);
-
-    // ✅ Now close (this clears pendingMove/currentQ)
     closeMathModal();
-
   } else {
     feedback.textContent = "Not quite — try again!";
     answerInput.select();
