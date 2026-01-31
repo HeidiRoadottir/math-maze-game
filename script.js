@@ -137,27 +137,42 @@ function closeMathModal(){
 }
 
 function checkAnswer(){
-  if(!currentQ || !pendingMove) return;
+  if(!currentQ){
+    console.log("No currentQ");
+    return;
+  }
+  if(!pendingMove){
+    console.log("No pendingMove (did tryMove run?)");
+    return;
+  }
 
-  const userVal = Number(answerInput.value.trim());
-  if(Number.isNaN(userVal)){
+  const raw = answerInput.value.trim();
+  const userVal = Number(raw);
+
+  console.log("Answer typed:", raw, "Number:", userVal, "Expected:", currentQ.answer, "Move:", pendingMove);
+
+  if(raw === "" || Number.isNaN(userVal)){
     feedback.textContent = "Type a number 🙂";
     return;
   }
 
-if(userVal === currentQ.answer){
-  correct++;
-  feedback.textContent = "Correct! ✅";
+  if(userVal === currentQ.answer){
+    correct++;
+    feedback.textContent = "Correct! ✅";
 
-  const move = { ...pendingMove }; // ✅ copy it before we clear it
+    // ✅ Apply move immediately BEFORE we clear anything
+    const { dx, dy } = pendingMove;
+    doMove(dx, dy);
 
-  setTimeout(() => {
-    closeMathModal();              // this clears pendingMove
-    doMove(move.dx, move.dy);      // ✅ use the saved copy
-  }, 250);
+    // ✅ Now close (this clears pendingMove/currentQ)
+    closeMathModal();
+
+  } else {
+    feedback.textContent = "Not quite — try again!";
+    answerInput.select();
+  }
 }
 
-}
 
 function showToast(msg){
   toast.textContent = msg;
