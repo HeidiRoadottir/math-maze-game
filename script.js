@@ -1,15 +1,31 @@
 // 0 = wall, 1 = path, 2 = start, 3 = goal
-const level = [
-  [0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,2,1,1,0,1,1,1,1,1,1,0],
-  [0,0,0,1,0,1,0,0,0,0,1,0],
-  [0,1,1,1,1,1,0,1,1,0,1,0],
-  [0,1,0,0,0,0,0,1,0,0,1,0],
-  [0,1,1,1,1,1,1,1,1,1,1,0],
-  [0,0,0,0,0,0,1,0,0,0,0,0],
-  [0,1,1,1,1,0,1,1,1,1,3,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0],
+const levels = [
+  [
+    [0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,2,1,1,0,1,1,1,1,1,1,0],
+    [0,0,0,1,0,1,0,0,0,0,1,0],
+    [0,1,1,1,1,1,0,1,1,0,1,0],
+    [0,1,0,0,0,0,0,1,0,0,1,0],
+    [0,1,1,1,1,1,1,1,1,1,1,0],
+    [0,0,0,0,0,0,1,0,0,0,0,0],
+    [0,1,1,1,1,0,1,1,1,1,3,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0],
+  ],
+  [
+    [0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,2,1,1,1,0,1,1,1,1,1,0],
+    [0,1,0,0,1,0,1,0,0,0,1,0],
+    [0,1,1,0,1,1,1,1,1,0,1,0],
+    [0,0,1,0,0,0,0,0,1,0,1,0],
+    [0,1,1,1,1,1,1,0,1,1,1,0],
+    [0,1,0,0,0,0,1,0,0,0,0,0],
+    [0,1,1,1,1,0,1,1,1,1,3,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0],
+  ]
 ];
+
+let levelIndex = 0;
+let level = levels[levelIndex];
 
 const boardEl = document.getElementById("board");
 const movesEl = document.getElementById("moves");
@@ -23,15 +39,67 @@ const cancelMove = document.getElementById("cancelMove");
 const feedback = document.getElementById("feedback");
 const toast = document.getElementById("toast");
 
-const rows = level.length;
-const cols = level[0].length;
+
+let rows = level.length;
+let cols = level[0].length;
 
 let player = findTile(2); // start
 let goal = findTile(3);
 
+let playerName = "You";
+let playerAvatar = "🙂";
+
 let moves = 0;
 let correct = 0;
 
+function loadLevel(index){
+  levelIndex = index;
+  level = levels[levelIndex];
+
+  // recompute sizes
+  rows = level.length;
+  cols = level[0].length;
+
+  player = findTile(2);
+  goal = findTile(3);
+
+  const startBackdrop = document.getElementById("startBackdrop");
+const nameInput = document.getElementById("nameInput");
+const avatarPicker = document.getElementById("avatarPicker");
+const startGameBtn = document.getElementById("startGame");
+
+const avatars = ["🙂","😺","🐸","🦊","🐼","🐵","🧙‍♂️","👩‍🚀"];
+
+let selectedAvatarIndex = 0;
+
+function buildAvatarPicker(){
+  avatarPicker.innerHTML = "";
+  avatars.forEach((a, i) => {
+    const b = document.createElement("button");
+    b.className = "avatarBtn" + (i === selectedAvatarIndex ? " selected" : "");
+    b.textContent = a;
+    b.addEventListener("click", () => {
+      selectedAvatarIndex = i;
+      buildAvatarPicker();
+    });
+    avatarPicker.appendChild(b);
+  });
+}
+
+buildAvatarPicker();
+
+startGameBtn.addEventListener("click", () => {
+  playerName = (nameInput.value.trim() || "Player").slice(0, 12);
+  playerAvatar = avatars[selectedAvatarIndex];
+  startBackdrop.classList.add("hidden");
+
+  // Start at level 1
+  loadLevel(0);
+});
+
+  
+  // Show start screen initially
+startBackdrop.classList.remove("hidden");
 
 
 function findTile(val){
@@ -44,8 +112,14 @@ function findTile(val){
 }
 
 function render(){
-  boardEl.style.gridTemplateColumns = `repeat(${cols}, 34px)`;
+  boardEl.style.gridTemplateColumns = `repeat(${cols}, var(--tileSize))`;
   boardEl.innerHTML = "";
+
+  if(player.r === r && player.c === c){
+  tile.classList.add("player");
+  tile.dataset.name = playerName;
+  tile.dataset.avatar = playerAvatar;
+}
 
   for(let r=0;r<rows;r++){
     for(let c=0;c<cols;c++){
@@ -58,9 +132,19 @@ function render(){
       if(v === 2) tile.classList.add("start");
       if(v === 3) tile.classList.add("goal");
 
-      if(player.r === r && player.c === c){
-        tile.classList.add("player");
-      }
+      if(player.r === goal.r && player.c === goal.c){
+  winEffects();
+
+  setTimeout(() => {
+    const next = levelIndex + 1;
+    if(next < levels.length){
+      loadLevel(next);
+    } else {
+      showToast("🏆 You beat all levels!");
+    }
+  }, 900);
+}
+
 
       boardEl.appendChild(tile);
     }
@@ -207,6 +291,97 @@ window.addEventListener("keydown", (e)=>{
   if(e.key === "ArrowLeft") tryMove(-1,0);
   if(e.key === "ArrowRight") tryMove(1,0);
 });
+
+// ---- SOUND (WebAudio) ----
+let audioCtx;
+function beep(freq=440, duration=0.09, type="sine", gain=0.07){
+  audioCtx ??= new (window.AudioContext || window.webkitAudioContext)();
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = type;
+  o.frequency.value = freq;
+  g.gain.value = gain;
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  o.start();
+  o.stop(audioCtx.currentTime + duration);
+}
+
+function soundCorrect(){
+  beep(660, 0.06, "triangle", 0.06);
+  setTimeout(()=>beep(880, 0.07, "triangle", 0.06), 70);
+}
+function soundWrong(){
+  beep(220, 0.12, "sawtooth", 0.04);
+}
+function soundWin(){
+  beep(523, 0.08, "square", 0.06);
+  setTimeout(()=>beep(659, 0.08, "square", 0.06), 90);
+  setTimeout(()=>beep(784, 0.12, "square", 0.06), 180);
+}
+
+// ---- CONFETTI ----
+const confettiCanvas = document.getElementById("confetti");
+const confettiCtx = confettiCanvas.getContext("2d");
+let confettiPieces = [];
+let confettiRunning = false;
+
+function resizeConfetti(){
+  confettiCanvas.width = window.innerWidth * devicePixelRatio;
+  confettiCanvas.height = window.innerHeight * devicePixelRatio;
+  confettiCtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+window.addEventListener("resize", resizeConfetti);
+resizeConfetti();
+
+function launchConfetti(){
+  confettiPieces = Array.from({length: 140}, () => ({
+    x: Math.random() * window.innerWidth,
+    y: -20 - Math.random() * 300,
+    r: 4 + Math.random() * 6,
+    vy: 2 + Math.random() * 5,
+    vx: -2 + Math.random() * 4,
+    rot: Math.random()*Math.PI,
+    vr: -0.15 + Math.random()*0.3
+  }));
+
+  confettiCanvas.classList.remove("hidden");
+  confettiRunning = true;
+  requestAnimationFrame(tickConfetti);
+
+  setTimeout(() => {
+    confettiRunning = false;
+    confettiCanvas.classList.add("hidden");
+  }, 900);
+}
+
+function tickConfetti(){
+  if(!confettiRunning) return;
+  confettiCtx.clearRect(0,0,window.innerWidth, window.innerHeight);
+
+  for(const p of confettiPieces){
+    p.x += p.vx;
+    p.y += p.vy;
+    p.rot += p.vr;
+
+    confettiCtx.save();
+    confettiCtx.translate(p.x, p.y);
+    confettiCtx.rotate(p.rot);
+    // no fixed colors requested, but we can still randomize per piece:
+    confettiCtx.fillStyle = `hsl(${Math.random()*360}, 90%, 60%)`;
+    confettiCtx.fillRect(-p.r, -p.r, p.r*2.2, p.r*1.2);
+    confettiCtx.restore();
+  }
+
+  requestAnimationFrame(tickConfetti);
+}
+
+function winEffects(){
+  soundWin();
+  launchConfetti();
+  showToast("🎉 Level complete!");
+}
+
 
 // Modal actions
 submitAnswer.addEventListener("click", checkAnswer);
