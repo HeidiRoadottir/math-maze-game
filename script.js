@@ -48,9 +48,9 @@ const startGameBtn = document.getElementById("startGame");
 const avatars = ["🙂","😺","🐸","🦊","🐼","🐵","🧙‍♂️","👩‍🚀"];
 let selectedAvatarIndex = 0;
 
-let rows, cols;
-let player;
-let goal;
+let rows = 0, cols = 0;
+let player = { r: 1, c: 1 };
+let goal = { r: 1, c: 1 };
 
 let playerName = "Player";
 let playerAvatar = "🙂";
@@ -61,7 +61,9 @@ let currentQ = null;
 
 // ---------- START SCREEN ----------
 function buildAvatarPicker(){
+  if(!avatarPicker) return;
   avatarPicker.innerHTML = "";
+
   avatars.forEach((a, i) => {
     const b = document.createElement("button");
     b.className = "avatarBtn" + (i === selectedAvatarIndex ? " selected" : "");
@@ -75,16 +77,21 @@ function buildAvatarPicker(){
 }
 buildAvatarPicker();
 
-startGameBtn.addEventListener("click", () => {
-  playerName = (nameInput.value.trim() || "Player").slice(0,12);
+startGameBtn?.addEventListener("click", () => {
+  playerName = (nameInput?.value.trim() || "Player").slice(0, 12);
   playerAvatar = avatars[selectedAvatarIndex];
 
-  startBackdrop.classList.add("hidden");
-  loadLevel(0);
+  startBackdrop?.classList.add("hidden");
+
+  // Reset to start of current level
+  player = findTile(2);
+  moves = 0;
+  correct = 0;
+  render();
 });
 
 // ---------- LEVEL ----------
-function loadLevel(index){
+function loadLevel(index, silent = false){
   levelIndex = index;
   level = levels[levelIndex];
 
@@ -98,19 +105,21 @@ function loadLevel(index){
   correct = 0;
 
   render();
-  showToast(`Level ${levelIndex + 1}`);
+  if(!silent) showToast(`Level ${levelIndex + 1}`);
 }
 
 function findTile(val){
   for(let r=0;r<rows;r++){
     for(let c=0;c<cols;c++){
-      if(level[r][c] === val) return {r,c};
+      if(level[r][c] === val) return { r, c };
     }
   }
-  return {r:1,c:1};
+  return { r: 1, c: 1 };
 }
 
 function render(){
+  if(!boardEl) return;
+
   boardEl.style.gridTemplateColumns = `repeat(${cols}, var(--tileSize))`;
   boardEl.innerHTML = "";
 
@@ -135,8 +144,8 @@ function render(){
     }
   }
 
-  movesEl.textContent = moves;
-  correctEl.textContent = correct;
+  if(movesEl) movesEl.textContent = String(moves);
+  if(correctEl) correctEl.textContent = String(correct);
 }
 
 function isWalkable(r,c){
@@ -181,9 +190,11 @@ function doMove(dx,dy){
 function randomQuestion(){
   const ops = ["+","-"];
   const op = ops[Math.floor(Math.random()*ops.length)];
+
   let a = randInt(1,12);
   let b = randInt(1,12);
   if(op === "-" && b > a) [a,b] = [b,a];
+
   const answer = op === "+" ? a+b : a-b;
   return { a, b, op, answer };
 }
@@ -232,6 +243,7 @@ function checkAnswer(){
 
 // ---------- UI ----------
 function showToast(msg){
+  if(!toast) return;
   toast.textContent = msg;
   toast.classList.remove("hidden");
   clearTimeout(showToast._t);
@@ -240,11 +252,13 @@ function showToast(msg){
 
 // Keyboard controls only
 window.addEventListener("keydown",(e)=>{
+  // If modal open:
   if(!modalBackdrop.classList.contains("hidden")){
     if(e.key==="Enter") checkAnswer();
     if(e.key==="Escape") closeMathModal();
     return;
   }
+
   if(e.key==="ArrowUp") tryMove(0,-1);
   if(e.key==="ArrowDown") tryMove(0,1);
   if(e.key==="ArrowLeft") tryMove(-1,0);
@@ -268,9 +282,10 @@ function soundWin(){beep(500);setTimeout(()=>beep(650),120);setTimeout(()=>beep(
 
 // ---------- CONFETTI ----------
 const confettiCanvas = document.getElementById("confetti");
-const confettiCtx = confettiCanvas.getContext("2d");
+const confettiCtx = confettiCanvas?.getContext("2d");
 
 function resizeConfetti(){
+  if(!confettiCanvas) return;
   confettiCanvas.width = window.innerWidth;
   confettiCanvas.height = window.innerHeight;
 }
@@ -278,6 +293,8 @@ window.addEventListener("resize", resizeConfetti);
 resizeConfetti();
 
 function launchConfetti(){
+  if(!confettiCanvas || !confettiCtx) return;
+
   const pieces = Array.from({length:120},()=>({
     x:Math.random()*confettiCanvas.width,
     y:-20,
@@ -318,11 +335,14 @@ function winEffects(){
 }
 
 // Modal actions
-submitAnswer.addEventListener("click", checkAnswer);
-cancelMove.addEventListener("click", closeMathModal);
-modalBackdrop.addEventListener("click", e=>{
+submitAnswer?.addEventListener("click", checkAnswer);
+cancelMove?.addEventListener("click", closeMathModal);
+modalBackdrop?.addEventListener("click", e=>{
   if(e.target === modalBackdrop) closeMathModal();
 });
 
-// Start screen first
-startBackdrop.classList.remove("hidden");
+// ✅ Render the maze immediately (so you can SEE it)
+loadLevel(0, true);
+
+// Start screen on top
+startBackdrop?.classList.remove("hidden");
