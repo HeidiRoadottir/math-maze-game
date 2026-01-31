@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Math Maze</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <h1>Math Maze</h1>
+      <div class="hud">
+        <div>Moves: <span id="moves">0</span></div>
+        <div>Correct: <span id="correct">0</span></div>
+      </div>
+    </header>
+
+    <section class="boardWrap">
+      <div id="board" class="board" aria-label="Maze board"></div>
+    </section>
+
+    <section class="controls" aria-label="Movement controls">
+      <button class="btn" data-move="up">⬆️</button>
+      <div class="row">
+        <button class="btn" data-move="left">⬅️</button>
+        <button class="btn" data-move="down">⬇️</button>
+        <button class="btn" data-move="right">➡️</button>
+      </div>
+      <p class="hint">Use arrow keys or buttons. Each move needs a math answer!</p>
+    </section>
+  </main>
+
+  <!-- Math Modal -->
+  <div id="modalBackdrop" class="backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h2 id="questionText">3 + 8 = ?</h2>
+
+      <div class="answerRow">
+        <input id="answerInput" inputmode="numeric" autocomplete="off" placeholder="Type answer" />
+        <button id="submitAnswer" class="btn primary">OK</button>
+      </div>
+
+      <p id="feedback" class="feedback" aria-live="polite"></p>
+      <div class="modalActions">
+        <button id="cancelMove" class="btn subtle">Cancel move</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
